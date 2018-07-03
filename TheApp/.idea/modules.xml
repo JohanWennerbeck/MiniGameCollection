@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/../ButtonClicker/ButtonClicker.iml" filepath="$PROJECT_DIR$/../ButtonClicker/ButtonClicker.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../CollectAllTheStars2/CollectAllTheStars2.iml" filepath="$PROJECT_DIR$/../CollectAllTheStars2/CollectAllTheStars2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../SkeletonTbmp/SkeletonTbmp.iml" filepath="$PROJECT_DIR$/../SkeletonTbmp/SkeletonTbmp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/TypeANumber.iml" filepath="$PROJECT_DIR$/TypeANumber.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../android-basic-samples.iml" filepath="$PROJECT_DIR$/../android-basic-samples.iml" />
+    </modules>
+  </component>
+</project>
