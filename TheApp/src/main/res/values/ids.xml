@@ -1,34 +1,35 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Copyright (C) 2013 Google Inc.
+<?xml version="1.0" encoding="utf-8"?>
+    <!--
+    Google Play game services IDs.
+    Save this file as res/values/games-ids.xml in your project.
+    -->
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
--->
-<resources>
-    <!-- TODO: Replace this entire file with the ids.xml provided from the Google Play Console.
+<!-- TODO: Replace this entire file with the ids.xml provided from the Google Play Console.
          NOTE: You can find this file by clicking the `Get Resources` link in
          the Events, Achievements, or Leaderboards menu of the Google Play Console. -->
-    <string name="app_id">295561015769</string>
-
-    <string name="achievement_prime">CgkI2eO8hs0IEAIQAw </string>
-    <string name="achievement_really_bored">CgkI2eO8hs0IEAIQCA </string>
-    <string name="achievement_bored">CgkI2eO8hs0IEAIQBw </string>
-    <string name="achievement_humble">CgkI2eO8hs0IEAIQBA </string>
-    <string name="achievement_arrogant">CgkI2eO8hs0IEAIQBQ </string>
-    <string name="achievement_leet">CgkI2eO8hs0IEAIQBg </string>
-
-    <string name="leaderboard_easy">CgkI2eO8hs0IEAIQCQ</string>
-    <string name="leaderboard_hard">CgkI2eO8hs0IEAIQCg</string>
-
-    <string name="event_start">CgkI2eO8hs0IEAIQAQ </string>
-    <string name="event_number_chosen">CgkI2eO8hs0IEAIQAg </string>
+<resources>
+<!-- app_id -->
+<string name="app_id" translatable="false">295561015769</string>
+<!-- package_name -->
+<string name="package_name" translatable="false">mini.game.collection</string>
+<!-- achievement a -->
+<string name="achievement_a" translatable="false">CgkI2eO8hs0IEAIQAw</string>
+<!-- achievement b -->
+<string name="achievement_b" translatable="false">CgkI2eO8hs0IEAIQBA</string>
+<!-- achievement c -->
+<string name="achievement_c" translatable="false">CgkI2eO8hs0IEAIQBQ</string>
+<!-- achievement d -->
+<string name="achievement_d" translatable="false">CgkI2eO8hs0IEAIQBg</string>
+<!-- achievement e -->
+<string name="achievement_e" translatable="false">CgkI2eO8hs0IEAIQBw</string>
+<!-- achievement f -->
+<string name="achievement_f" translatable="false">CgkI2eO8hs0IEAIQCA</string>
+<!-- leaderboard a -->
+<string name="leaderboard_a" translatable="false">CgkI2eO8hs0IEAIQCQ</string>
+<!-- leaderboard b -->
+<string name="leaderboard_b" translatable="false">CgkI2eO8hs0IEAIQCg</string>
+<!-- event Start -->
+<string name="event_start" translatable="false">CgkI2eO8hs0IEAIQAQ</string>
+<!-- event Number chosen -->
+<string name="event_number_chosen" translatable="false">CgkI2eO8hs0IEAIQAg</string>
 </resources>

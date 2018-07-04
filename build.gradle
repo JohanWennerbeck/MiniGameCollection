@@ -21,10 +21,10 @@ allprojects {
     }
 
     ext {
-        android_compile_version = 26
+        android_compile_version = 28
 
         // Google Play Services minimum requirements is 14
-        android_min_sdk_version = 14
+        android_min_sdk_version = 19
 
         appcompat_library_version = '27.0.2'
         support_library_version = '27.0.2'

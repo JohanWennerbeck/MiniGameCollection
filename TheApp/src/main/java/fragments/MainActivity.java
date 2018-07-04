@@ -20,9 +20,17 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -62,8 +70,8 @@ import mini.game.collection.R;
  *
  * @author Bruno Oliveira
  */
-public class MainActivity extends FragmentActivity implements
-    MainMenuFragment.Listener {
+public class MainActivity extends AppCompatActivity implements
+    MainMenuFragment.Listener, NavigationView.OnNavigationItemSelectedListener {
 
   // Fragments
   private MainMenuFragment mMainMenuFragment;
@@ -84,8 +92,6 @@ public class MainActivity extends FragmentActivity implements
   // tag for debug logging
   private static final String TAG = "TanC";
 
-  // playing on hard mode?
-  private boolean mHardMode = false;
 
   // achievements and scores we're pending to push to the cloud
   // (waiting for the user to sign in, for instance)
@@ -96,6 +102,17 @@ public class MainActivity extends FragmentActivity implements
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.activity_main);
+      Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+      setSupportActionBar(toolbar);
+
+      DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+      ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+              this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+      drawer.addDrawerListener(toggle);
+      toggle.syncState();
+
+      NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+      navigationView.setNavigationItemSelectedListener(this);
 
     // Create the client used to sign in to Google services.
     mGoogleSignInClient = GoogleSignIn.getClient(this,
@@ -113,7 +130,7 @@ public class MainActivity extends FragmentActivity implements
     // already be there after rotation and trying to add it again would
     // result in overlapping fragments. But since we don't support rotation,
     // we don't deal with that for code simplicity.
-    getSupportFragmentManager().beginTransaction().add(R.id.fragment_container,
+    getSupportFragmentManager().beginTransaction().add(R.id.drawer_layout,
         mMainMenuFragment).commit();
 
     checkPlaceholderIds();
@@ -131,14 +148,14 @@ public class MainActivity extends FragmentActivity implements
 
     for (Integer id : new Integer[]{
         R.string.app_id,
-        R.string.achievement_prime,
-        R.string.achievement_really_bored,
-        R.string.achievement_bored,
-        R.string.achievement_humble,
-        R.string.achievement_arrogant,
-        R.string.achievement_leet,
-        R.string.leaderboard_easy,
-        R.string.leaderboard_hard,
+        R.string.achievement_a,
+        R.string.achievement_b,
+        R.string.achievement_c,
+        R.string.achievement_d,
+        R.string.achievement_e,
+        R.string.achievement_f,
+        R.string.leaderboard_a,
+        R.string.leaderboard_b,
         R.string.event_start,
         R.string.event_number_chosen,}) {
 
@@ -197,7 +214,7 @@ public class MainActivity extends FragmentActivity implements
 
   // Switch UI to the given fragment
   private void switchToFragment(Fragment newFrag) {
-    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, newFrag)
+    getSupportFragmentManager().beginTransaction().replace(R.id.drawer_layout, newFrag)
         .commit();
   }
 
@@ -342,52 +359,41 @@ public class MainActivity extends FragmentActivity implements
       return;
     }
     if (mOutbox.mPrimeAchievement) {
-      mAchievementsClient.unlock(getString(R.string.achievement_prime));
+      mAchievementsClient.unlock(getString(R.string.achievement_a));
       mOutbox.mPrimeAchievement = false;
     }
     if (mOutbox.mArrogantAchievement) {
-      mAchievementsClient.unlock(getString(R.string.achievement_arrogant));
+      mAchievementsClient.unlock(getString(R.string.achievement_b));
       mOutbox.mArrogantAchievement = false;
     }
     if (mOutbox.mHumbleAchievement) {
-      mAchievementsClient.unlock(getString(R.string.achievement_humble));
+      mAchievementsClient.unlock(getString(R.string.achievement_c));
       mOutbox.mHumbleAchievement = false;
     }
     if (mOutbox.mLeetAchievement) {
-      mAchievementsClient.unlock(getString(R.string.achievement_leet));
+      mAchievementsClient.unlock(getString(R.string.achievement_d));
       mOutbox.mLeetAchievement = false;
     }
     if (mOutbox.mBoredSteps > 0) {
-      mAchievementsClient.increment(getString(R.string.achievement_really_bored),
+      mAchievementsClient.increment(getString(R.string.achievement_e),
           mOutbox.mBoredSteps);
-      mAchievementsClient.increment(getString(R.string.achievement_bored),
+      mAchievementsClient.increment(getString(R.string.achievement_f),
           mOutbox.mBoredSteps);
       mOutbox.mBoredSteps = 0;
     }
     if (mOutbox.mEasyModeScore >= 0) {
-      mLeaderboardsClient.submitScore(getString(R.string.leaderboard_easy),
+      mLeaderboardsClient.submitScore(getString(R.string.leaderboard_a),
           mOutbox.mEasyModeScore);
       mOutbox.mEasyModeScore = -1;
     }
     if (mOutbox.mHardModeScore >= 0) {
-      mLeaderboardsClient.submitScore(getString(R.string.leaderboard_hard),
+      mLeaderboardsClient.submitScore(getString(R.string.leaderboard_b),
           mOutbox.mHardModeScore);
       mOutbox.mHardModeScore = -1;
     }
   }
 
-  /**
-   * Update leaderboards with the user's score.
-   *
-   * @param finalScore The score the user got.
-   */
-  private void updateLeaderboards(int finalScore) {
-    if (mHardMode && mOutbox.mHardModeScore < finalScore) {
-      mOutbox.mHardModeScore = finalScore;
-    } else if (!mHardMode && mOutbox.mEasyModeScore < finalScore) {
-      mOutbox.mEasyModeScore = finalScore;
-    }
-  }
+
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -494,4 +500,55 @@ public class MainActivity extends FragmentActivity implements
     }
 
   }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // Handle navigation view item clicks here.
+        int id = item.getItemId();
+
+        if (id == R.id.Memory) {
+            // Handle the camera action
+        } else if (id == R.id.FourInARow) {
+
+        } else if (id == R.id.CarBingo) {
+
+        }
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
 }
