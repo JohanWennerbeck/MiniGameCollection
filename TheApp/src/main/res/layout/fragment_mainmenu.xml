@@ -19,12 +19,6 @@
         android:gravity="center"
         android:padding="20dp">
 
-        <TextView android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="18sp"
-            android:layout_marginBottom="10dp"
-            android:id="@+id/text_greeting" />
-
     </LinearLayout>
 
     <LinearLayout android:id="@+id/sign_in_bar"

@@ -25,16 +25,8 @@ import android.widget.TextView;
 
 import mini.game.collection.R;
 
-/**
- * Fragment with the main menu for the game. The main menu allows the player
- * to choose a gameplay mode (Easy or Hard), and click the buttons to
- * show view achievements/leaderboards.
- *
- * @author Bruno Oliveira (Google)
- */
+
 public class MainMenuFragment extends Fragment implements OnClickListener {
-  private String mGreeting = "Hello, anonymous user (not signed in)";
-  private TextView mGreetingTextView;
   private View mSignInBarView;
   private View mSignOutBarView;
 
@@ -67,9 +59,6 @@ public class MainMenuFragment extends Fragment implements OnClickListener {
       view.findViewById(clickableId).setOnClickListener(this);
     }
 
-
-
-    mGreetingTextView = view.findViewById(R.id.text_greeting);
     mSignInBarView = view.findViewById(R.id.sign_in_bar);
     mSignOutBarView = view.findViewById(R.id.sign_out_bar);
 
@@ -82,13 +71,7 @@ public class MainMenuFragment extends Fragment implements OnClickListener {
     mListener = listener;
   }
 
-  public void setGreeting(String greeting) {
-    mGreeting = greeting;
-    updateUI();
-  }
-
   private void updateUI() {
-    mGreetingTextView.setText(mGreeting);
     mSignInBarView.setVisibility(mShowSignInButton ? View.VISIBLE : View.GONE);
     mSignOutBarView.setVisibility(mShowSignInButton ? View.GONE : View.VISIBLE);
   }
