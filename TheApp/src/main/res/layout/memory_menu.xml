@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/memory_menu_layout"
+    android:fitsSystemWindows="true"
+    tools:openDrawer="start">>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <RelativeLayout
+            android:id="@+id/matchup_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:orientation="vertical"
+            tools:context="fragments.MainActivity">
+
+            <LinearLayout
+                android:id="@+id/secret_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:orientation="vertical"
+                android:visibility="visible"
+                tools:context="fragments.MainActivity"
+                tools:ignore="UselessParent">
+
+                <TextView
+                    android:id="@+id/name_field"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_margin="@dimen/margin_small"
+                    android:text=""
+                    android:textAppearance="@style/HelpText.Caption" />
+
+                <Button
+                    android:id="@+id/startMatchButton"
+                    android:layout_width="200dp"
+                    android:layout_height="wrap_content"
+                    android:onClick="onStartMatchClicked"
+                    android:text="@string/start_match" />
+
+                <Button
+                    android:id="@+id/checkGamesButton"
+                    android:layout_width="200dp"
+                    android:layout_height="wrap_content"
+                    android:onClick="onCheckGamesClicked"
+                    android:text="@string/check_games" />
+
+                <Button
+                    android:id="@+id/quickMatchButon"
+                    android:layout_width="200dp"
+                    android:layout_height="wrap_content"
+                    android:onClick="onQuickMatchClicked"
+                    android:text="@string/quick_match" />
+            </LinearLayout>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/progressLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#AAAAAAAA"
+            android:visibility="gone">
+
+            <ProgressBar
+                android:id="@+id/progress_dialog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true" />
+        </RelativeLayout>
+    </RelativeLayout>
+
+</LinearLayout>

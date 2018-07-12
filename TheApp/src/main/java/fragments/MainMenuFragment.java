@@ -25,7 +25,13 @@ import android.widget.TextView;
 
 import mini.game.collection.R;
 
-
+/**
+ * Fragment with the main menu for the game. The main menu allows the player
+ * to choose a gameplay mode (Easy or Hard), and click the buttons to
+ * show view achievements/leaderboards.
+ *
+ * @author Bruno Oliveira (Google)
+ */
 public class MainMenuFragment extends Fragment implements OnClickListener {
   private View mSignInBarView;
   private View mSignOutBarView;
