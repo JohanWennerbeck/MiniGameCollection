@@ -1,9 +1,7 @@
 package fragments;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
@@ -12,40 +10,23 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.games.Games;
 import com.google.android.gms.games.GamesCallbackStatusCodes;
-import com.google.android.gms.games.GamesClient;
 import com.google.android.gms.games.GamesClientStatusCodes;
-import com.google.android.gms.games.InvitationsClient;
-import com.google.android.gms.games.Player;
-import com.google.android.gms.games.PlayersClient;
 import com.google.android.gms.games.TurnBasedMultiplayerClient;
-import com.google.android.gms.games.multiplayer.Invitation;
-import com.google.android.gms.games.multiplayer.InvitationCallback;
-import com.google.android.gms.games.multiplayer.Multiplayer;
-import com.google.android.gms.games.multiplayer.realtime.RoomConfig;
 import com.google.android.gms.games.multiplayer.turnbased.TurnBasedMatch;
-import com.google.android.gms.games.multiplayer.turnbased.TurnBasedMatchConfig;
-import com.google.android.gms.games.multiplayer.turnbased.TurnBasedMatchUpdateCallback;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 
-import java.util.ArrayList;
+import org.json.JSONException;
 
-import gamecomponents.SkeletonTurn;
+import gamecomponents.MemoryTurn;
+import gamecomponents.memory.IMemory;
+import gamecomponents.memory.MemoryFactory;
 import mini.game.collection.R;
 
 public class MemoryGameFragment extends Fragment implements View.OnClickListener{
-
-    // Local convenience pointers
-    public TextView mDataView;
-    public TextView mTurnTextView;
 
     private AlertDialog mAlertDialog;
     // Should I be showing the turn API?
@@ -62,7 +43,7 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     // This is the current match data after being unpersisted.
     // Do not retain references to match data once you have
     // taken an action on the match, such as takeTurn()
-    public SkeletonTurn mTurnData;
+    public MemoryTurn mTurnData;
 
     // Client used to interact with the TurnBasedMultiplayer system.
     private TurnBasedMultiplayerClient mTurnBasedMultiplayerClient = null;
@@ -76,9 +57,7 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
 
     interface Listener {
         void memoryDoneClicked();
-        void memoryCancelClicked();
-        void memoryFinishClicked();
-        void memoryLeaveClicked();
+        void memoryGiveUpClicked();
     }
 
     private MemoryGameFragment.Listener mListener = null;
@@ -90,19 +69,28 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
         View view = inflater.inflate(R.layout.memory_game, container, false);
 
         final int[] clickableIds = new int[]{
-                R.id.doneButton,
-                R.id.cancelButton,
-                R.id.leaveButton,
-                R.id.finishButton};
+                R.id.done_button,
+                R.id.give_up_button,
+                R.id.b1,
+                R.id.b2,
+                R.id.b3,
+                R.id.b4,
+                R.id.b5,
+                R.id.b6,
+                R.id.b7,
+                R.id.b8,
+                R.id.b9,
+                R.id.b10,
+                R.id.b11,
+                R.id.b12,
+                R.id.b13,
+                R.id.b14,
+                R.id.b15,
+                R.id.b16};
 
         for (int clickableId : clickableIds) {
             view.findViewById(clickableId).setOnClickListener(this);
         }
-
-        mDataView = view.findViewById(R.id.data_view);
-        mTurnTextView = view.findViewById(R.id.turn_counter_view);
-
-
         return view;
     }
 
@@ -113,17 +101,13 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.doneButton:
+            case R.id.done_button:
                 mListener.memoryDoneClicked();
                 break;
-            case R.id.cancelButton:
-                mListener.memoryCancelClicked();
+            case R.id.give_up_button:
+                mListener.memoryGiveUpClicked();
                 break;
-            case R.id.finishButton:
-                mListener.memoryFinishClicked();
-                break;
-            case R.id.leaveButton:
-                mListener.memoryLeaveClicked();
+                //TODO add all buttons
             default:
                 break;
         }
@@ -153,8 +137,8 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     public void setGameplayUI() {
         Log.d(TAG, "in setGameplayUI");
         isDoingTurn = true;
-        mDataView.setText(mTurnData.data);
-        mTurnTextView.setText(getString(R.string.turn_label, mTurnData.turnCounter));
+        //mDataView.setText(mTurnData.data);
+        //mTurnTextView.setText(getString(R.string.turn_label, mTurnData.turnCounter));
     }
 
     // Helpful dialogs
@@ -217,7 +201,11 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
                     .show();
 
             TurnBasedMatch match = matchOutOfDateApiException.getMatch();
-            updateMatch(match);
+            try {
+                updateMatch(match);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
 
             return;
         }
@@ -248,9 +236,9 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     // UI.
     public void startMatch(TurnBasedMatch match) {
         Log.d(TAG, "in startMatch");
-        mTurnData = new SkeletonTurn();
+        mTurnData = new MemoryTurn();
         // Some basic turn data
-        mTurnData.data = "First turn";
+        mTurnData.data = MemoryFactory.getInstance().createMemory();
 
         mMatch = match;
 
@@ -263,7 +251,11 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
                 .addOnSuccessListener(new OnSuccessListener<TurnBasedMatch>() {
                     @Override
                     public void onSuccess(TurnBasedMatch turnBasedMatch) {
-                        updateMatch(turnBasedMatch);
+                        try {
+                            updateMatch(turnBasedMatch);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                 })
                 .addOnFailureListener(createFailureListener("There was a problem taking a turn!"));
@@ -273,7 +265,7 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
 
     // This is the main function that gets called when players choose a match
     // from the inbox, or else create a match and want to start it.
-    public void updateMatch(TurnBasedMatch match) {
+    public void updateMatch(TurnBasedMatch match) throws JSONException {
         Log.d(TAG, "in updateMatch");
         mMatch = match;
 
@@ -308,7 +300,11 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
         // OK, it's active. Check on turn status.
         switch (turnStatus) {
             case TurnBasedMatch.MATCH_TURN_STATUS_MY_TURN:
-                mTurnData = SkeletonTurn.unpersist(mMatch.getData());
+                mTurnData = new MemoryTurn();
+                mTurnData.data = MemoryFactory.getInstance().createMemory() ;
+                mTurnData.data.setTiles(MemoryTurn.unpersist(mMatch.getData()));
+                System.out.println("JAg ar har" + mTurnData.data.getTiles().get(0).getType());
+
                 setGameplayUI();
                 return;
             case TurnBasedMatch.MATCH_TURN_STATUS_THEIR_TURN:
@@ -331,7 +327,11 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
 
         if (match.getData() != null) {
             // This is a game that has already started, so I'll just start
-            updateMatch(match);
+            try {
+                updateMatch(match);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
             return;
         }
 

@@ -66,9 +66,12 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
+import org.json.JSONException;
+
 import java.util.ArrayList;
 
-import gamecomponents.SkeletonTurn;
+import gamecomponents.MemoryTurn;
+import gamecomponents.memory.MemoryFactory;
 import mini.game.collection.R;
 
 
@@ -89,11 +92,10 @@ import mini.game.collection.R;
  */
 public class MainActivity extends AppCompatActivity implements
         MainMenuFragment.Listener, NavigationView.OnNavigationItemSelectedListener, MemoryMenuFragment.Listener, MemoryGameFragment.Listener {
+    //Everything needed for starting screen
 
-    // Fragments
+    //Fragment
     private MainMenuFragment mMainMenuFragment;
-    private MemoryMenuFragment mMemoryFragment;
-    private MemoryGameFragment mMemoryGameFragment;
 
     // Client used to sign in with Google APIs
     private GoogleSignInClient mGoogleSignInClient;
@@ -107,35 +109,21 @@ public class MainActivity extends AppCompatActivity implements
     private static final int RC_UNUSED = 5001;
     private static final int RC_SIGN_IN = 9001;
 
+    //AlertDialog
     private AlertDialog mAlertDialog;
 
     // tag for debug logging
     private static final String TAG = "MGC";
 
+    //Maybe not needed
     private PlayersClient mPlayersClient;
+
+
     // Client used to interact with the TurnBasedMultiplayer system.
     private TurnBasedMultiplayerClient mTurnBasedMultiplayerClient = null;
 
     // Client used to interact with the Invitation system.
     private InvitationsClient mInvitationsClient = null;
-
-    final static int RC_SELECT_PLAYERS = 10000;
-    final static int RC_LOOK_AT_MATCHES = 10001;
-
-    // This is the current match we're in; null if not loaded
-    public TurnBasedMatch mMatch;
-
-    // This is the current match data after being unpersisted.
-    // Do not retain references to match data once you have
-    // taken an action on the match, such as takeTurn()
-    public SkeletonTurn mTurnData;
-
-    private String mPlayerId;
-
-    // Should I be showing the turn API?
-    public boolean isDoingTurn = false;
-
-
 
     // achievements and scores we're pending to push to the cloud
     // (waiting for the user to sign in, for instance)
@@ -360,7 +348,7 @@ public class MainActivity extends AppCompatActivity implements
                 .addOnFailureListener(createFailureListener(
                         "There was a problem getting the activation hint!"));
 
-       // mMemoryFragment.setViewVisibility();
+        // mMemoryFragment.setViewVisibility();
 
         // As a demonstration, we are registering this activity as a handler for
         // invitation and match events.
@@ -387,7 +375,7 @@ public class MainActivity extends AppCompatActivity implements
 
         // Show sign-in button on main menu
         mMainMenuFragment.setShowSignInButton(true);
-        }
+    }
 
     private void startSignInIntent() {
         Log.d(TAG, "in startSignInIntent");
@@ -554,51 +542,6 @@ public class MainActivity extends AppCompatActivity implements
     public void onSignOutButtonClicked() {
         Log.d(TAG, "in onSignOutButtonClicked");
         signOut();
-    }
-
-    @Override
-    public void startMemoryGame() {
-        mTurnBasedMultiplayerClient.getSelectOpponentsIntent(1, 7, true)
-                .addOnSuccessListener(new OnSuccessListener<Intent>() {
-                    @Override
-                    public void onSuccess(Intent intent) {
-                        startActivityForResult(intent, RC_SELECT_PLAYERS);
-                    }
-                })
-                .addOnFailureListener(createFailureListener(
-                        getString(R.string.error_get_select_opponents)));
-    }
-
-    @Override
-    public void startMemoryQuickMatch() {
-        Bundle autoMatchCriteria = RoomConfig.createAutoMatchCriteria(1, 1, 0);
-
-        TurnBasedMatchConfig turnBasedMatchConfig = TurnBasedMatchConfig.builder()
-                .setAutoMatchCriteria(autoMatchCriteria).build();
-
-
-
-        // Start the match
-        mTurnBasedMultiplayerClient.createMatch(turnBasedMatchConfig)
-                .addOnSuccessListener(new OnSuccessListener<TurnBasedMatch>() {
-                    @Override
-                    public void onSuccess(TurnBasedMatch turnBasedMatch) {
-                        onInitiateMatch(turnBasedMatch);
-                    }
-                })
-                .addOnFailureListener(createFailureListener("There was a problem creating a match!"));
-    }
-
-    @Override
-    public void checkMemoryGames() {
-        mTurnBasedMultiplayerClient.getInboxIntent()
-                .addOnSuccessListener(new OnSuccessListener<Intent>() {
-                    @Override
-                    public void onSuccess(Intent intent) {
-                        startActivityForResult(intent, RC_LOOK_AT_MATCHES);
-                    }
-                })
-                .addOnFailureListener(createFailureListener(getString(R.string.error_get_inbox_intent)));
     }
 
     private class AccomplishmentsOutbox {
@@ -769,6 +712,74 @@ public class MainActivity extends AppCompatActivity implements
         };
     }
 
+
+    //Everything needed for Memory
+
+    // Fragments
+    private MemoryMenuFragment mMemoryFragment;
+    private MemoryGameFragment mMemoryGameFragment;
+
+    final static int RC_SELECT_PLAYERS = 10000;
+    final static int RC_LOOK_AT_MATCHES = 10001;
+
+    // This is the current match we're in; null if not loaded
+    public TurnBasedMatch mMatch;
+
+    // This is the current match data after being unpersisted.
+    // Do not retain references to match data once you have
+    // taken an action on the match, such as takeTurn()
+    public MemoryTurn mTurnData;
+
+    private String mPlayerId;
+
+    // Should I be showing the turn API?
+    public boolean isDoingTurn = false;
+
+    @Override
+    public void startMemoryGame() {
+        mTurnBasedMultiplayerClient.getSelectOpponentsIntent(1, 7, true)
+                .addOnSuccessListener(new OnSuccessListener<Intent>() {
+                    @Override
+                    public void onSuccess(Intent intent) {
+                        startActivityForResult(intent, RC_SELECT_PLAYERS);
+                    }
+                })
+                .addOnFailureListener(createFailureListener(
+                        getString(R.string.error_get_select_opponents)));
+    }
+
+    @Override
+    public void startMemoryQuickMatch() {
+        Bundle autoMatchCriteria = RoomConfig.createAutoMatchCriteria(1, 1, 0);
+
+        TurnBasedMatchConfig turnBasedMatchConfig = TurnBasedMatchConfig.builder()
+                .setAutoMatchCriteria(autoMatchCriteria).build();
+
+
+
+        // Start the match
+        mTurnBasedMultiplayerClient.createMatch(turnBasedMatchConfig)
+                .addOnSuccessListener(new OnSuccessListener<TurnBasedMatch>() {
+                    @Override
+                    public void onSuccess(TurnBasedMatch turnBasedMatch) {
+                        onInitiateMatch(turnBasedMatch);
+                    }
+                })
+                .addOnFailureListener(createFailureListener("There was a problem creating a match!"));
+    }
+
+    @Override
+    public void checkMemoryGames() {
+        mTurnBasedMultiplayerClient.getInboxIntent()
+                .addOnSuccessListener(new OnSuccessListener<Intent>() {
+                    @Override
+                    public void onSuccess(Intent intent) {
+                        startActivityForResult(intent, RC_LOOK_AT_MATCHES);
+                    }
+                })
+                .addOnFailureListener(createFailureListener(getString(R.string.error_get_inbox_intent)));
+    }
+
     private void onInitiateMatch(TurnBasedMatch match) {
         Log.d(TAG, "in onInitiateMatch");
 
@@ -790,9 +801,9 @@ public class MainActivity extends AppCompatActivity implements
     // UI.
     public void startMatch(TurnBasedMatch match) {
         Log.d(TAG, "in startMatch");
-        mTurnData = new SkeletonTurn();
+        mTurnData = new MemoryTurn();
         // Some basic turn data
-        mTurnData.data = "First turn";
+        mTurnData.data = MemoryFactory.getInstance().createMemory();
 
         mMatch = match;
 
@@ -848,7 +859,13 @@ public class MainActivity extends AppCompatActivity implements
         // OK, it's active. Check on turn status.
         switch (turnStatus) {
             case TurnBasedMatch.MATCH_TURN_STATUS_MY_TURN:
-                mTurnData = SkeletonTurn.unpersist(mMatch.getData());
+                try {
+                    mTurnData = new MemoryTurn();
+                    mTurnData.data = MemoryFactory.getInstance().createMemory();
+                    mTurnData.data.setTiles(MemoryTurn.unpersist(mMatch.getData()));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 setGameplayUI();
                 return;
             case TurnBasedMatch.MATCH_TURN_STATUS_THEIR_TURN:
@@ -862,7 +879,7 @@ public class MainActivity extends AppCompatActivity implements
 
         mTurnData = null;
 
-       // mMemoryGameFragment.setViewVisibility();
+        // mMemoryGameFragment.setViewVisibility();
     }
 
     // Switch to gameplay view.
@@ -905,6 +922,133 @@ public class MainActivity extends AppCompatActivity implements
             Toast.makeText(MainActivity.this, "A match was removed.", Toast.LENGTH_SHORT).show();
         }
     };
+
+    // Cancel the game. Should possibly wait until the game is canceled before
+    // giving up on the view.
+    public void memoryCancelClicked() {
+
+
+        mTurnBasedMultiplayerClient.cancelMatch(mMatch.getMatchId())
+                .addOnSuccessListener(new OnSuccessListener<String>() {
+                    @Override
+                    public void onSuccess(String matchId) {
+                        onCancelMatch(matchId);
+                    }
+                })
+                .addOnFailureListener(createFailureListener("There was a problem cancelling the match!"));
+
+        isDoingTurn = false;
+        mMemoryGameFragment.setDoingTurn(isDoingTurn);
+        switchToMemoryMenu();
+    }
+
+    // Leave the game during your turn. Note that there is a separate
+    // mTurnBasedMultiplayerClient.leaveMatch() if you want to leave NOT on your turn.
+    public void memoryLeaveClicked() {
+
+        String nextParticipantId = getNextParticipantId();
+
+        mTurnBasedMultiplayerClient.leaveMatchDuringTurn(mMatch.getMatchId(), nextParticipantId)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        onLeaveMatch();
+                    }
+                })
+                .addOnFailureListener(createFailureListener("There was a problem leaving the match!"));
+        switchToMemoryMenu();
+    }
+
+    // Finish the game. Sometimes, this is your only choice.
+    public void memoryFinishClicked() {
+
+        mTurnBasedMultiplayerClient.finishMatch(mMatch.getMatchId())
+                .addOnSuccessListener(new OnSuccessListener<TurnBasedMatch>() {
+                    @Override
+                    public void onSuccess(TurnBasedMatch turnBasedMatch) {
+                        onUpdateMatch(turnBasedMatch);
+                    }
+                })
+                .addOnFailureListener(createFailureListener("There was a problem finishing the match!"));
+
+        isDoingTurn = false;
+        mMemoryGameFragment.setDoingTurn(isDoingTurn);
+        switchToMemoryMenu();
+    }
+
+    public void memoryGiveUpClicked() {
+
+    }
+
+
+    // Upload your new gamestate, then take a turn, and pass it on to the next
+    // player.
+    public void memoryDoneClicked() {
+        String nextParticipantId = getNextParticipantId();
+        // Create the next turn
+        //mTurnData.data ;
+
+        mTurnBasedMultiplayerClient.takeTurn(mMatch.getMatchId(),
+                mTurnData.persist(), nextParticipantId)
+                .addOnSuccessListener(new OnSuccessListener<TurnBasedMatch>() {
+                    @Override
+                    public void onSuccess(TurnBasedMatch turnBasedMatch) {
+                        onUpdateMatch(turnBasedMatch);
+                    }
+                })
+                .addOnFailureListener(createFailureListener("There was a problem taking a turn!"));
+
+        mTurnData = null;
+        switchToMemoryMenu();
+    }
+
+    private void onLeaveMatch() {
+        Log.d(TAG, "in onLeaveMatch");
+
+
+        isDoingTurn = false;
+        showWarning("Left", "You've left this match.");
+    }
+
+
+    public void onUpdateMatch(TurnBasedMatch match) {
+        Log.d(TAG, "in onUpdateMatch");
+
+
+
+        if (match.canRematch()) {
+            askForRematch();
+        }
+
+        isDoingTurn = (match.getTurnStatus() == TurnBasedMatch.MATCH_TURN_STATUS_MY_TURN);
+
+        if (isDoingTurn) {
+            updateMatch(match);
+            return;
+        }
+
+        //mMemoryGameFragment.setViewVisibility();
+    }
+
+    private void onCancelMatch(String matchId) {
+        Log.d(TAG, "in onCancelMatch");
+
+
+        isDoingTurn = false;
+
+        showWarning("Match", "This match (" + matchId + ") was canceled.  " +
+                "All other players will have their game ended.");
+    }
+
+    public void switchToMemoryMenu(){
+        switchToFragment(mMemoryFragment);
+    }
+
+    //Everything else
+
+
+
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -998,118 +1142,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
 
-    // Cancel the game. Should possibly wait until the game is canceled before
-    // giving up on the view.
-    public void memoryCancelClicked() {
 
-
-        mTurnBasedMultiplayerClient.cancelMatch(mMatch.getMatchId())
-                .addOnSuccessListener(new OnSuccessListener<String>() {
-                    @Override
-                    public void onSuccess(String matchId) {
-                        onCancelMatch(matchId);
-                    }
-                })
-                .addOnFailureListener(createFailureListener("There was a problem cancelling the match!"));
-
-        isDoingTurn = false;
-        mMemoryGameFragment.setDoingTurn(isDoingTurn);
-        switchToMemoryMenu();
-    }
-
-    // Leave the game during your turn. Note that there is a separate
-    // mTurnBasedMultiplayerClient.leaveMatch() if you want to leave NOT on your turn.
-    public void memoryLeaveClicked() {
-
-        String nextParticipantId = getNextParticipantId();
-
-        mTurnBasedMultiplayerClient.leaveMatchDuringTurn(mMatch.getMatchId(), nextParticipantId)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        onLeaveMatch();
-                    }
-                })
-                .addOnFailureListener(createFailureListener("There was a problem leaving the match!"));
-        switchToMemoryMenu();
-    }
-
-    // Finish the game. Sometimes, this is your only choice.
-    public void memoryFinishClicked() {
-
-        mTurnBasedMultiplayerClient.finishMatch(mMatch.getMatchId())
-                .addOnSuccessListener(new OnSuccessListener<TurnBasedMatch>() {
-                    @Override
-                    public void onSuccess(TurnBasedMatch turnBasedMatch) {
-                        onUpdateMatch(turnBasedMatch);
-                    }
-                })
-                .addOnFailureListener(createFailureListener("There was a problem finishing the match!"));
-
-        isDoingTurn = false;
-        mMemoryGameFragment.setDoingTurn(isDoingTurn);
-        switchToMemoryMenu();
-    }
-
-
-    // Upload your new gamestate, then take a turn, and pass it on to the next
-    // player.
-    public void memoryDoneClicked() {
-        String nextParticipantId = getNextParticipantId();
-        // Create the next turn
-        mTurnData.turnCounter += 1;
-        mTurnData.data = mMemoryGameFragment.mDataView.getText().toString();
-
-        mTurnBasedMultiplayerClient.takeTurn(mMatch.getMatchId(),
-                mTurnData.persist(), nextParticipantId)
-                .addOnSuccessListener(new OnSuccessListener<TurnBasedMatch>() {
-                    @Override
-                    public void onSuccess(TurnBasedMatch turnBasedMatch) {
-                        onUpdateMatch(turnBasedMatch);
-                    }
-                })
-                .addOnFailureListener(createFailureListener("There was a problem taking a turn!"));
-
-        mTurnData = null;
-        switchToMemoryMenu();
-    }
-
-    private void onLeaveMatch() {
-        Log.d(TAG, "in onLeaveMatch");
-
-
-        isDoingTurn = false;
-        showWarning("Left", "You've left this match.");
-    }
-
-
-    public void onUpdateMatch(TurnBasedMatch match) {
-        Log.d(TAG, "in onUpdateMatch");
-
-
-
-        if (match.canRematch()) {
-            askForRematch();
-        }
-
-        isDoingTurn = (match.getTurnStatus() == TurnBasedMatch.MATCH_TURN_STATUS_MY_TURN);
-
-        if (isDoingTurn) {
-            updateMatch(match);
-            return;
-        }
-
-        //mMemoryGameFragment.setViewVisibility();
-    }
-    private void onCancelMatch(String matchId) {
-        Log.d(TAG, "in onCancelMatch");
-
-
-        isDoingTurn = false;
-
-        showWarning("Match", "This match (" + matchId + ") was canceled.  " +
-                "All other players will have their game ended.");
-    }
 
     /**
      * Get the next participant. In this function, we assume that we are
@@ -1189,7 +1222,4 @@ public class MainActivity extends AppCompatActivity implements
         isDoingTurn = false;
     }
 
-    public void switchToMemoryMenu(){
-        switchToFragment(mMemoryFragment);
-    }
 }
