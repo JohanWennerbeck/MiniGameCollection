@@ -96,8 +96,6 @@ public class MemoryTurn {
         for(int i = 0; i<array.length();i++ ) {
             JSONObject object = array.getJSONObject(i);
             list.add(toObject(object));
-            System.out.println("LISTSIZE = " + list.size());
-            System.out.println("TYPE IS " + list.get(i).getType());
         }
 
         return list;

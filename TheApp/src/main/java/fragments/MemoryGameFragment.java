@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.android.gms.common.api.ApiException;
@@ -40,11 +41,6 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     // This is the current match we're in; null if not loaded
     public TurnBasedMatch mMatch;
 
-    // This is the current match data after being unpersisted.
-    // Do not retain references to match data once you have
-    // taken an action on the match, such as takeTurn()
-    public MemoryTurn mTurnData;
-
     // Client used to interact with the TurnBasedMultiplayer system.
     private TurnBasedMultiplayerClient mTurnBasedMultiplayerClient = null;
 
@@ -55,9 +51,35 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     // tag for debug logging
     private static final String TAG = "MGC";
 
+    Button b1;
+    Button b2;
+    Button b3;
+    Button b4;
+    Button b5;
+    Button b6;
+    Button b7;
+    Button b8;
+    Button b9;
+    Button b10;
+    Button b11;
+    Button b12;
+    Button b13;
+    Button b14;
+    Button b15;
+    Button b16;
+    Button doneButton;
+
+    private int firstTry;
+    private int secondTry;
+    private boolean done;
+    private boolean correct;
+    private boolean canClick;
+    private int turn;
+
     interface Listener {
         void memoryDoneClicked();
         void memoryGiveUpClicked();
+        MemoryTurn getMemoryData();
     }
 
     private MemoryGameFragment.Listener mListener = null;
@@ -91,7 +113,32 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
         for (int clickableId : clickableIds) {
             view.findViewById(clickableId).setOnClickListener(this);
         }
+
+        b1 = view.findViewById(R.id.b1);
+        b2 = view.findViewById(R.id.b2);
+        b3 = view.findViewById(R.id.b3);
+        b4 = view.findViewById(R.id.b4);
+        b5 = view.findViewById(R.id.b5);
+        b6 = view.findViewById(R.id.b6);
+        b7 = view.findViewById(R.id.b7);
+        b8 = view.findViewById(R.id.b8);
+        b9 = view.findViewById(R.id.b9);
+        b10 = view.findViewById(R.id.b10);
+        b11 = view.findViewById(R.id.b11);
+        b12 = view.findViewById(R.id.b12);
+        b13 = view.findViewById(R.id.b13);
+        b14 = view.findViewById(R.id.b14);
+        b15 = view.findViewById(R.id.b15);
+        b16 = view.findViewById(R.id.b16);
+        doneButton = view.findViewById(R.id.done_button);
+
+        firstTry = -1;
+        secondTry = -1;
+        done = false;
+        canClick = true;
+        doneButton.setVisibility(View.GONE);
         return view;
+
     }
 
     public void setListener(MemoryGameFragment.Listener listener) {
@@ -100,6 +147,65 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
 
     @Override
     public void onClick(View view) {
+        if(canClick) {
+            switch (view.getId()) {
+                case R.id.b1:
+                    onMemoryTileTappedEvent(0);
+                    break;
+                case R.id.b2:
+                    onMemoryTileTappedEvent(1);
+                    break;
+                case R.id.b3:
+                    onMemoryTileTappedEvent(2);
+                    break;
+                case R.id.b4:
+                    onMemoryTileTappedEvent(3);
+                    break;
+                case R.id.b5:
+                    onMemoryTileTappedEvent(4);
+                    break;
+                case R.id.b6:
+                    onMemoryTileTappedEvent(5);
+                    break;
+                case R.id.b7:
+                    onMemoryTileTappedEvent(6);
+                    break;
+                case R.id.b8:
+                    onMemoryTileTappedEvent(7);
+                    break;
+                case R.id.b9:
+                    onMemoryTileTappedEvent(8);
+                    break;
+                case R.id.b10:
+                    onMemoryTileTappedEvent(9);
+                    break;
+                case R.id.b11:
+                    onMemoryTileTappedEvent(10);
+                    break;
+                case R.id.b12:
+                    onMemoryTileTappedEvent(11);
+                    break;
+                case R.id.b13:
+                    onMemoryTileTappedEvent(12);
+                    break;
+                case R.id.b14:
+                    onMemoryTileTappedEvent(13);
+                    break;
+                case R.id.b15:
+                    onMemoryTileTappedEvent(14);
+                    break;
+                case R.id.b16:
+                    onMemoryTileTappedEvent(15);
+                    break;
+                case R.id.give_up_button:
+                    mListener.memoryGiveUpClicked();
+                    break;
+                default:
+                    break;
+
+            }
+        }
+
         switch (view.getId()) {
             case R.id.done_button:
                 mListener.memoryDoneClicked();
@@ -107,11 +213,201 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
             case R.id.give_up_button:
                 mListener.memoryGiveUpClicked();
                 break;
-                //TODO add all buttons
+                default:
+                    break;
+        }
+    }
+
+    public void onMemoryTileTappedEvent(int i) {
+        System.out.println(firstTry + " är firsttry värden");
+        if(firstTry != -1 && correct == false && done == true) {
+            turnAroundWrongGuesses();
+        } else if (firstTry == -1){
+            performFirst(i);
+        } else if (!done){
+            performSecond(i);
+        }
+
+            //TODO win statement
+    }
+
+    private void turnAroundWrongGuesses() {
+        System.out.println("Inne i turnAroundWrongGuesses");
+
+        getData().data.getTiles().get(secondTry).toggleChecked();
+        getData().data.getTiles().get(firstTry).toggleChecked();
+
+        changeToUnFlipped(firstTry);
+        changeToUnFlipped(secondTry);
+        firstTry = -1;
+        doneButton.setVisibility(View.VISIBLE);
+        canClick = false;
+    }
+
+    private void performSecond(int i) {
+        System.out.println("Inne i perform second");
+
+        if(!getData().data.getTiles().get(i).getChecked()) {
+            System.out.println("Inne i perform second2");
+
+            getData().data.getTiles().get(i).toggleChecked();
+            secondTry = i;
+            changeToFlipped(i);
+            if (getData().data.getTiles().get(firstTry).getType() == getData().data.getTiles().get(i).getType()) {
+                correct = true;
+                firstTry = -1;
+                increaseScore();
+            } else {
+                correct = false;
+                done = true;
+            }
+        }
+    }
+
+    private void increaseScore() {
+        //TODO increase score
+    }
+
+    private void performFirst(int i) {
+        System.out.println("Inne i perform first");
+
+        if(!getData().data.getTiles().get(i).getChecked()) {
+            System.out.println("Inne i perform first2");
+            System.out.println("2");
+            getData().data.getTiles().get(i).toggleChecked();
+            firstTry = i;
+            changeToFlipped(i);
+
+        }
+    }
+
+    public void changeToFlipped(int i){
+        switch (i){
+            case 0:
+                b1.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 1:
+                b2.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 2:
+                b3.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 3:
+                b4.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 4:
+                b5.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 5:
+                b6.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 6:
+                b7.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 7:
+                b8.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 8:
+                b9.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 9:
+                b10.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 10:
+                b11.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 11:
+                b12.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 12:
+                b13.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 13:
+                b14.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 14:
+                b15.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
+            case 15:
+                b16.setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                break;
             default:
                 break;
         }
     }
+
+    public void changeToUnFlipped(int i){
+        switch (i){
+            case 0:
+                b1.setText("O");
+                break;
+            case 1:
+                b2.setText("O");
+                break;
+            case 2:
+                b3.setText("O");
+                break;
+            case 3:
+                b4.setText("O");
+                break;
+            case 4:
+                b5.setText("O");
+                break;
+            case 5:
+                b6.setText("O");
+                break;
+            case 6:
+                b7.setText("O");
+                break;
+            case 7:
+                b8.setText("O");
+                break;
+            case 8:
+                b9.setText("O");
+                break;
+            case 9:
+                b10.setText("O");
+                break;
+            case 10:
+                b11.setText("O");
+                break;
+            case 11:
+                b12.setText("O");
+                break;
+            case 12:
+                b13.setText("O");
+                break;
+            case 13:
+                b14.setText("O");
+                break;
+            case 14:
+                b15.setText("O");
+                break;
+            case 15:
+                b16.setText("O");
+                break;
+            default:
+                break;
+        }
+    }
+
+    public MemoryTurn getData(){
+       return mListener.getMemoryData();
+    }
+
+    public String[] memoryTexts = {"Police", "Horse", "Cow", "Ambulance", "Tractor", "Airplane","Helicopter","Bike"};
+
+
+
+
+
+
+
+
+
+
+
+
 
     @Override
     public void onPause(){
@@ -142,16 +438,6 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     }
 
     // Helpful dialogs
-
-    public void showSpinner() {
-        Log.d(TAG, "in showSpinner");
-        this.getActivity().findViewById(R.id.progressLayout).setVisibility(View.VISIBLE);
-    }
-
-    public void dismissSpinner() {
-        Log.d(TAG, "in dismissSpinner");
-        this.getActivity().findViewById(R.id.progressLayout).setVisibility(View.GONE);
-    }
 
     // Generic warning/info dialog
     public void showWarning(String title, String message) {
@@ -228,41 +514,6 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     }
 
 
-    // startMatch() happens in response to the createTurnBasedMatch()
-    // above. This is only called on success, so we should have a
-    // valid match object. We're taking this opportunity to setup the
-    // game, saving our initial state. Calling takeTurn() will
-    // callback to OnTurnBasedMatchUpdated(), which will show the game
-    // UI.
-    public void startMatch(TurnBasedMatch match) {
-        Log.d(TAG, "in startMatch");
-        mTurnData = new MemoryTurn();
-        // Some basic turn data
-        mTurnData.data = MemoryFactory.getInstance().createMemory();
-
-        mMatch = match;
-
-        String myParticipantId = mMatch.getParticipantId(mPlayerId);
-
-        showSpinner();
-
-        mTurnBasedMultiplayerClient.takeTurn(match.getMatchId(),
-                mTurnData.persist(), myParticipantId)
-                .addOnSuccessListener(new OnSuccessListener<TurnBasedMatch>() {
-                    @Override
-                    public void onSuccess(TurnBasedMatch turnBasedMatch) {
-                        try {
-                            updateMatch(turnBasedMatch);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                })
-                .addOnFailureListener(createFailureListener("There was a problem taking a turn!"));
-        dismissSpinner();
-    }
-
-
     // This is the main function that gets called when players choose a match
     // from the inbox, or else create a match and want to start it.
     public void updateMatch(TurnBasedMatch match) throws JSONException {
@@ -300,11 +551,12 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
         // OK, it's active. Check on turn status.
         switch (turnStatus) {
             case TurnBasedMatch.MATCH_TURN_STATUS_MY_TURN:
-                mTurnData = new MemoryTurn();
+                /*mTurnData = new MemoryTurn();
                 mTurnData.data = MemoryFactory.getInstance().createMemory() ;
                 mTurnData.data.setTiles(MemoryTurn.unpersist(mMatch.getData()));
                 System.out.println("JAg ar har" + mTurnData.data.getTiles().get(0).getType());
-
+*/
+                System.out.println("OJOJOJOJ PROBLEM PREOBLEM");
                 setGameplayUI();
                 return;
             case TurnBasedMatch.MATCH_TURN_STATUS_THEIR_TURN:
@@ -316,26 +568,9 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
                         "Still waiting for invitations.\n\nBe patient!");
         }
 
-        mTurnData = null;
+        //TODO mTurnData = null;
 
         //setViewVisibility();
-    }
-
-    private void onInitiateMatch(TurnBasedMatch match) {
-        Log.d(TAG, "in onInitiateMatch");
-        dismissSpinner();
-
-        if (match.getData() != null) {
-            // This is a game that has already started, so I'll just start
-            try {
-                updateMatch(match);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return;
-        }
-
-        startMatch(match);
     }
 
 

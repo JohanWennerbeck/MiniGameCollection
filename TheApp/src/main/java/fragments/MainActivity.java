@@ -800,7 +800,7 @@ public class MainActivity extends AppCompatActivity implements
     // callback to OnTurnBasedMatchUpdated(), which will show the game
     // UI.
     public void startMatch(TurnBasedMatch match) {
-        Log.d(TAG, "in startMatch");
+        Log.d(TAG, "in startMatch in MainActivity");
         mTurnData = new MemoryTurn();
         // Some basic turn data
         mTurnData.data = MemoryFactory.getInstance().createMemory();
@@ -1002,6 +1002,9 @@ public class MainActivity extends AppCompatActivity implements
         switchToMemoryMenu();
     }
 
+    public MemoryTurn getMemoryData(){
+        return this.mTurnData;
+    }
     private void onLeaveMatch() {
         Log.d(TAG, "in onLeaveMatch");
 
