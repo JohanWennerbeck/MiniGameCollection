@@ -24,6 +24,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -178,6 +179,14 @@ public class MainActivity extends AppCompatActivity implements
         checkPlaceholderIds();
 
         fragmentUsedNow = F_MainMenu;
+
+        getSupportFragmentManager().addOnBackStackChangedListener(
+                new FragmentManager.OnBackStackChangedListener() {
+                    public void onBackStackChanged() {
+                        System.out.println("Den är i onBackStackChanged");
+
+                    }
+                });
     }
 
     // Check the sample to ensure all placeholder ids are are updated with real-world values.
@@ -260,7 +269,7 @@ public class MainActivity extends AppCompatActivity implements
 
     // Switch UI to the given fragment
     private void switchToFragment(Fragment newFrag) {
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, newFrag)
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, newFrag).addToBackStack(null)
                 .commit();
 
     }
@@ -569,16 +578,10 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onBackPressed() {
         Log.d(TAG, "in onBackPressed");
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
-        } else if (fragmentUsedNow == F_MemoryMenu){
-            switchToFragment(mMainMenuFragment);
-            fragmentUsedNow = F_MainMenu;
-        } else if (fragmentUsedNow == F_MemoryGame) {
-            switchToMemoryMenu();
-        } else {
+        }  else {
             super.onBackPressed();
         }
     }
