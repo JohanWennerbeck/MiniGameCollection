@@ -118,6 +118,11 @@ public class MainActivity extends AppCompatActivity implements
     //Maybe not needed
     private PlayersClient mPlayersClient;
 
+    private int fragmentUsedNow;
+
+    public static final int F_MainMenu = 0;
+    public static final int F_MemoryMenu = 1;
+    public static final int F_MemoryGame = 2;
 
     // Client used to interact with the TurnBasedMultiplayer system.
     private TurnBasedMultiplayerClient mTurnBasedMultiplayerClient = null;
@@ -169,6 +174,8 @@ public class MainActivity extends AppCompatActivity implements
         getSupportFragmentManager().beginTransaction().add(R.id.fragment_container  ,
                 mMainMenuFragment).commit();
         checkPlaceholderIds();
+
+        fragmentUsedNow = F_MainMenu;
     }
 
     // Check the sample to ensure all placeholder ids are are updated with real-world values.
@@ -564,6 +571,11 @@ public class MainActivity extends AppCompatActivity implements
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+        } else if (fragmentUsedNow == F_MemoryMenu){
+            switchToFragment(mMainMenuFragment);
+            fragmentUsedNow = F_MainMenu;
+        } else if (fragmentUsedNow == F_MemoryGame) {
+            switchToMemoryMenu();
         } else {
             super.onBackPressed();
         }
@@ -606,9 +618,9 @@ public class MainActivity extends AppCompatActivity implements
         if (id == R.id.Memory) {
             Log.d(TAG, "Starta Memory");
             switchToMemoryMenu();
-
         } else if (id == R.id.FourInARow) {
             switchToFragment(mMainMenuFragment);
+            fragmentUsedNow = F_MainMenu;
         } else if (id == R.id.CarBingo) {
 
         }
@@ -881,6 +893,7 @@ public class MainActivity extends AppCompatActivity implements
     // Switch to gameplay view.
     public void setGameplayUI() {
         switchToFragment(mMemoryGameFragment);
+        fragmentUsedNow = F_MemoryGame;
     }
 
     private InvitationCallback mInvitationCallback = new InvitationCallback() {
@@ -1041,6 +1054,7 @@ public class MainActivity extends AppCompatActivity implements
 
     public void switchToMemoryMenu(){
         switchToFragment(mMemoryFragment);
+        fragmentUsedNow = F_MemoryMenu;
     }
 
     //Everything else
