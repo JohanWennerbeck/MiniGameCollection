@@ -68,6 +68,8 @@ public class MainMenuFragment extends Fragment implements OnClickListener {
     mSignInBarView = view.findViewById(R.id.sign_in_bar);
     mSignOutBarView = view.findViewById(R.id.sign_out_bar);
 
+
+
     updateUI();
 
     return view;

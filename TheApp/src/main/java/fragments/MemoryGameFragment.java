@@ -2,7 +2,10 @@ package fragments;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -10,6 +13,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.common.api.ApiException;
@@ -22,8 +27,12 @@ import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.json.JSONException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import gamecomponents.MemoryTurn;
 import gamecomponents.memory.IMemory;
+import gamecomponents.memory.IMemoryTile;
 import gamecomponents.memory.MemoryFactory;
 import mini.game.collection.R;
 
@@ -33,23 +42,14 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     // Should I be showing the turn API?
     public boolean isDoingTurn = false;
 
-
-    // request codes we use when invoking an external activity
-    private static final int RC_UNUSED = 5001;
-    private static final int RC_SIGN_IN = 9001;
-
     // This is the current match we're in; null if not loaded
     public TurnBasedMatch mMatch;
 
-    // Client used to interact with the TurnBasedMultiplayer system.
-    private TurnBasedMultiplayerClient mTurnBasedMultiplayerClient = null;
-
-
-    private String mDisplayName;
-    private String mPlayerId;
-
     // tag for debug logging
     private static final String TAG = "MGC";
+
+    //Handler
+    Handler handler;
 
     Button b1;
     Button b2;
@@ -68,13 +68,16 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     Button b15;
     Button b16;
     Button doneButton;
+    TextView showTurnText;
+    RelativeLayout relativeLayout;
 
     private int firstTry;
     private int secondTry;
     private boolean done;
     private boolean correct;
     private boolean canClick;
-    private int turn;
+    private int clickedNumber;
+    private boolean updateTapDone;
 
     interface Listener {
         void memoryDoneClicked();
@@ -131,12 +134,23 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
         b15 = view.findViewById(R.id.b15);
         b16 = view.findViewById(R.id.b16);
         doneButton = view.findViewById(R.id.done_button);
+        showTurnText = view.findViewById(R.id.load_game_text);
+        relativeLayout = view.findViewById(R.id.memory_game_relative_layout);
+        relativeLayout.setOnClickListener(this);
 
         firstTry = -1;
         secondTry = -1;
         done = false;
         canClick = true;
-        doneButton.setVisibility(View.GONE);
+        doneButton.setBackgroundColor(Color.GRAY);
+        doneButton.setClickable(false);
+        clickedNumber = 1;
+        updateTapDone = false;
+        showMemoryWithoutUpdate();
+        handler = new Handler(getActivity().getApplicationContext().getMainLooper());
+        showTurnText.setVisibility(View.VISIBLE);
+        showTurnText.setTextColor(Color.BLACK);
+
         return view;
 
     }
@@ -148,61 +162,67 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     @Override
     public void onClick(View view) {
         if(canClick) {
-            switch (view.getId()) {
-                case R.id.b1:
-                    onMemoryTileTappedEvent(0);
-                    break;
-                case R.id.b2:
-                    onMemoryTileTappedEvent(1);
-                    break;
-                case R.id.b3:
-                    onMemoryTileTappedEvent(2);
-                    break;
-                case R.id.b4:
-                    onMemoryTileTappedEvent(3);
-                    break;
-                case R.id.b5:
-                    onMemoryTileTappedEvent(4);
-                    break;
-                case R.id.b6:
-                    onMemoryTileTappedEvent(5);
-                    break;
-                case R.id.b7:
-                    onMemoryTileTappedEvent(6);
-                    break;
-                case R.id.b8:
-                    onMemoryTileTappedEvent(7);
-                    break;
-                case R.id.b9:
-                    onMemoryTileTappedEvent(8);
-                    break;
-                case R.id.b10:
-                    onMemoryTileTappedEvent(9);
-                    break;
-                case R.id.b11:
-                    onMemoryTileTappedEvent(10);
-                    break;
-                case R.id.b12:
-                    onMemoryTileTappedEvent(11);
-                    break;
-                case R.id.b13:
-                    onMemoryTileTappedEvent(12);
-                    break;
-                case R.id.b14:
-                    onMemoryTileTappedEvent(13);
-                    break;
-                case R.id.b15:
-                    onMemoryTileTappedEvent(14);
-                    break;
-                case R.id.b16:
-                    onMemoryTileTappedEvent(15);
-                    break;
-                case R.id.give_up_button:
-                    mListener.memoryGiveUpClicked();
-                    break;
-                default:
-                    break;
+            if(updateTapDone) {
+                switch (view.getId()) {
+                    case R.id.b1:
+                        onMemoryTileTappedEvent(0);
+                        break;
+                    case R.id.b2:
+                        onMemoryTileTappedEvent(1);
+                        break;
+                    case R.id.b3:
+                        onMemoryTileTappedEvent(2);
+                        break;
+                    case R.id.b4:
+                        onMemoryTileTappedEvent(3);
+                        break;
+                    case R.id.b5:
+                        onMemoryTileTappedEvent(4);
+                        break;
+                    case R.id.b6:
+                        onMemoryTileTappedEvent(5);
+                        break;
+                    case R.id.b7:
+                        onMemoryTileTappedEvent(6);
+                        break;
+                    case R.id.b8:
+                        onMemoryTileTappedEvent(7);
+                        break;
+                    case R.id.b9:
+                        onMemoryTileTappedEvent(8);
+                        break;
+                    case R.id.b10:
+                        onMemoryTileTappedEvent(9);
+                        break;
+                    case R.id.b11:
+                        onMemoryTileTappedEvent(10);
+                        break;
+                    case R.id.b12:
+                        onMemoryTileTappedEvent(11);
+                        break;
+                    case R.id.b13:
+                        onMemoryTileTappedEvent(12);
+                        break;
+                    case R.id.b14:
+                        onMemoryTileTappedEvent(13);
+                        break;
+                    case R.id.b15:
+                        onMemoryTileTappedEvent(14);
+                        break;
+                    case R.id.b16:
+                        onMemoryTileTappedEvent(15);
+                        break;
+                    case R.id.give_up_button:
+                        mListener.memoryGiveUpClicked();
+                        break;
+                    default:
+                        break;
 
+                }
+            } else {
+                    updateTapDone = true;
+                    updateTap();
+                    showTurnText.setVisibility(View.GONE);
             }
         }
 
@@ -219,28 +239,24 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     }
 
     public void onMemoryTileTappedEvent(int i) {
-        System.out.println(firstTry + " är firsttry värden");
-        if(firstTry != -1 && correct == false && done == true) {
-            turnAroundWrongGuesses();
-        } else if (firstTry == -1){
+        if (firstTry == -1){
             performFirst(i);
         } else if (!done){
             performSecond(i);
         }
-
+        if(firstTry != -1 && correct == false && done == true) {
+            turnAroundWrongGuesses();
+        }
             //TODO win statement
     }
 
     private void turnAroundWrongGuesses() {
-        System.out.println("Inne i turnAroundWrongGuesses");
 
         getData().data.getTiles().get(secondTry).toggleChecked();
         getData().data.getTiles().get(firstTry).toggleChecked();
 
-        changeToUnFlipped(firstTry);
-        changeToUnFlipped(secondTry);
-        firstTry = -1;
-        doneButton.setVisibility(View.VISIBLE);
+        doneButton.setBackgroundColor(Color.GREEN);
+        doneButton.setClickable(true);
         canClick = false;
     }
 
@@ -334,6 +350,8 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
             default:
                 break;
         }
+        getData().data.getTiles().get(i).setClickedNumber(clickedNumber);
+        clickedNumber++;
     }
 
     public void changeToUnFlipped(int i){
@@ -395,9 +413,127 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
        return mListener.getMemoryData();
     }
 
+    public void updateMemory(){
+
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final Button[] buttons = {b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16};
+                final List<IMemoryTile> clickedList = new ArrayList<>();
+                final List<Integer> clickedListInt = new ArrayList<>();
+
+                for (int i = 0; i < 16; i++){
+                    final int iTemp = i;
+                    if(getData().data.getTiles().get(i).getClickedNumber() != 0){
+                        clickedList.add(getData().data.getTiles().get(i));
+                        clickedListInt.add(i);
+                    } else {
+                        if(getData().data.getTiles().get(i).getChecked()){
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    buttons[iTemp].setText(memoryTexts[getData().data.getTiles().get(iTemp).getType()]);
+                                }
+                            });
+
+                        } else {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    buttons[iTemp].setText("O");
+                                }
+                            });
+                        }
+                    }
+                }
+                int nextToLast = -1;
+                for (int i = 1; i <= clickedList.size(); i++){
+                    for (int j = 0; j < clickedList.size(); j++) {
+                        final int jTemp = j;
+                        if (i == clickedList.get(jTemp).getClickedNumber() && i <= clickedList.size() - 2) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    buttons[clickedListInt.get(jTemp)].setText(memoryTexts[getData().data.getTiles().get(clickedListInt.get(jTemp)).getType()]);
+                                }
+                            });
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            getData().data.getTiles().get(clickedListInt.get(j)).setClickedNumber(0);
+                        } else if (i == clickedList.get(j).getClickedNumber() && nextToLast == -1) {
+                            nextToLast = j;
+                            getData().data.getTiles().get(clickedListInt.get(j)).setClickedNumber(0);
+                        } else if (i == clickedList.get(j).getClickedNumber()) {
+                            final int nextToLastTemp = nextToLast;
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    buttons[clickedListInt.get(nextToLastTemp)].setText(memoryTexts[getData().data.getTiles().get(clickedListInt.get(nextToLastTemp)).getType()]);
+                                }
+                            });
+                            getData().data.getTiles().get(clickedListInt.get(j)).setClickedNumber(0);
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    buttons[clickedListInt.get(jTemp)].setText(memoryTexts[getData().data.getTiles().get(clickedListInt.get(jTemp)).getType()]);
+                                }
+                            });
+
+                            try {
+                                Thread.sleep(2000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    buttons[clickedListInt.get(jTemp)].setText("O");
+                                    buttons[clickedListInt.get(nextToLastTemp)].setText("O");
+                                }
+                            });
+
+
+
+                        }
+                    }
+                }
+            }
+        }).start();
+
+
+    }
+
+    public void updateTap(){
+        System.out.println("BOOM UpdateTap!");
+        updateMemory();
+    }
+
+    public void showMemoryWithoutUpdate(){
+        Button[] buttons = {b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12, b13, b14, b15, b16};
+
+        for (int i = 0; i < 16; i++){
+            if(getData().data.getTiles().get(i).getClickedNumber() != 0){
+                buttons[i].setText("O");
+            } else {
+                if(getData().data.getTiles().get(i).getChecked()){
+                    buttons[i].setText(memoryTexts[getData().data.getTiles().get(i).getType()]);
+                } else {
+                    buttons[i].setText("O");
+                }
+            }
+        }
+    }
+
     public String[] memoryTexts = {"Police", "Horse", "Cow", "Ambulance", "Tractor", "Airplane","Helicopter","Bike"};
-
-
 
 
 
@@ -419,15 +555,6 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     // This is a helper functio that will do all the setup to create a simple failure message.
     // Add it to any task and in the case of an failure, it will report the string in an alert
     // dialog.
-    private OnFailureListener createFailureListener(final String string) {
-        return new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                handleException(e, string);
-            }
-        };
-    }
-
 
     // Switch to gameplay view.
     public void setGameplayUI() {
@@ -615,10 +742,9 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
 
         showWarning("Warning", getResources().getString(stringId));
     }
-    public void setmTurnBasedMultiplayerClient(TurnBasedMultiplayerClient turnBasedMultiplayerClient){
-        this.mTurnBasedMultiplayerClient = turnBasedMultiplayerClient;
-    }
+
     public void setDoingTurn(boolean bool){
         this.isDoingTurn = bool;
     }
+
 }

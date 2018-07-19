@@ -66,6 +66,7 @@ public class MemoryTurn {
         try {
             object.put("Type", memoryTile.getType());
             object.put("Checked", memoryTile.getChecked());
+            object.put("clickedNumber", memoryTile.getClickedNumber());
         } catch (JSONException e) {
             Log.e("MemoryTurn", "There was an issue writing JSON!", e);
         }
@@ -106,6 +107,7 @@ public class MemoryTurn {
         try {
                 memoryTile.setType(object.getInt("Type"));
                 memoryTile.setChecked(object.getBoolean("Checked"));
+                memoryTile.setClickedNumber(object.getInt("clickedNumber"));
         } catch (JSONException e) {
             Log.e("MemoryTurn", "There was an issue parsing JSON!", e);
         }

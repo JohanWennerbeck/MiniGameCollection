@@ -136,6 +136,7 @@ public class MainActivity extends AppCompatActivity implements
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+
         final DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -308,8 +309,6 @@ public class MainActivity extends AppCompatActivity implements
         mPlayersClient = Games.getPlayersClient(this, googleSignInAccount);
 
         mTurnBasedMultiplayerClient = Games.getTurnBasedMultiplayerClient(this, googleSignInAccount);
-        mMemoryFragment.setmTurnBasedMultiplayerClient(mTurnBasedMultiplayerClient);
-        mMemoryGameFragment.setmTurnBasedMultiplayerClient(mTurnBasedMultiplayerClient);
 
         mInvitationsClient = Games.getInvitationsClient(this, googleSignInAccount);
 
@@ -319,11 +318,8 @@ public class MainActivity extends AppCompatActivity implements
                         new OnSuccessListener<Player>() {
                             @Override
                             public void onSuccess(Player player) {
-                                mMemoryFragment.setDisplayName(player.getDisplayName());
                                 mPlayerId = player.getPlayerId();
-
-                                //mMemoryFragment.setViewVisibility();
-                            }
+                                }
                         }
                 )
                 .addOnFailureListener(createFailureListener("There was a problem getting the player!"));
@@ -612,7 +608,7 @@ public class MainActivity extends AppCompatActivity implements
             switchToMemoryMenu();
 
         } else if (id == R.id.FourInARow) {
-
+            switchToFragment(mMainMenuFragment);
         } else if (id == R.id.CarBingo) {
 
         }

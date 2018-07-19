@@ -6,15 +6,16 @@
     android:id="@+id/memory_game_layout"
     android:fitsSystemWindows="true"
     tools:openDrawer="start">
-
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:id="@+id/memory_game_relative_layout">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:layout_marginTop="?attr/actionBarSize">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -176,6 +177,15 @@
             </LinearLayout>
 
         </LinearLayout>
-    </RelativeLayout>
 
-</LinearLayout>
+        <TextView
+            android:id="@+id/load_game_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tap to see opponents last turn"
+            android:textAlignment="center"
+            android:textSize="@dimen/font_size_large"
+            android:layout_marginTop="120dp"/>
+</RelativeLayout>
+
+    </LinearLayout>

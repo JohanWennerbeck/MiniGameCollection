@@ -17,12 +17,13 @@ public class MemoryTile implements IMemoryTile {
 
     private int type;
     private boolean checked;
-
+    private int clickedNumber;
 
 
     public MemoryTile(int type){
         this.type = type;
         checked = false;
+        this.clickedNumber = 0;
     }
 
     public MemoryTile(){}
@@ -51,4 +52,16 @@ public class MemoryTile implements IMemoryTile {
     public void setChecked(boolean bool) {
         this.checked = bool;
     }
+
+    @Override
+    public void setClickedNumber(int i) {
+        this.clickedNumber = i;
+    }
+
+    @Override
+    public int getClickedNumber() {
+        return this.clickedNumber;
+    }
+
+
 }

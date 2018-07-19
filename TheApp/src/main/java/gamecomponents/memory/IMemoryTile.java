@@ -11,4 +11,6 @@ public interface IMemoryTile {
     public boolean getChecked();
     public void toggleChecked();
     public void setChecked(boolean bool);
+    void setClickedNumber(int i);
+    int getClickedNumber();
 }
