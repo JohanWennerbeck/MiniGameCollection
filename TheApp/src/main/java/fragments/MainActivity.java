@@ -140,6 +140,8 @@ public class MainActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
 
         final DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -894,6 +896,7 @@ public class MainActivity extends AppCompatActivity implements
     public void setGameplayUI() {
         switchToFragment(mMemoryGameFragment);
         fragmentUsedNow = F_MemoryGame;
+
     }
 
     private InvitationCallback mInvitationCallback = new InvitationCallback() {
