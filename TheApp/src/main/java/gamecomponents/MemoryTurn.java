@@ -29,7 +29,6 @@ import java.util.List;
 
 import gamecomponents.memory.IMemory;
 import gamecomponents.memory.IMemoryTile;
-import gamecomponents.memory.Memory;
 import gamecomponents.memory.MemoryFactory;
 import gamecomponents.memory.MemoryTile;
 
@@ -41,10 +40,15 @@ import gamecomponents.memory.MemoryTile;
 public class MemoryTurn {
 
     public static final String TAG = "EBTurn";
-
+    public String playerOneName;
+    public String playerTwoName;
+    public int playerOneScore= 0;
+    public int playerTwoScore= 0;
+    public int playerturn;
     public IMemory data;
-
     public MemoryTurn() {
+        playerOneName = "testtester";
+        playerTwoName = "testtester";
     }
 
     // This is the byte array we will write out to the TBMP API.
@@ -53,6 +57,17 @@ public class MemoryTurn {
         for(IMemoryTile memoryTile: data.getTiles()) {
             retVal.put(toJson(memoryTile));
         }
+        JSONObject object = new JSONObject();
+        try {
+            object.put("playerOneName", playerOneName);
+            object.put("playerTwoName", playerTwoName);
+            object.put("playerOneScore", playerOneScore);
+            object.put("playerTwoScore", playerTwoScore);
+            object.put("playerTurn", playerturn);
+        } catch (JSONException e){
+            Log.e("MemoryPlayers", "There was an issue writing JSON!", e);
+        }
+        retVal.put(object);
         String st = retVal.toString();
 
         Log.d(TAG, "==== PERSISTING\n" + st);
@@ -74,11 +89,12 @@ public class MemoryTurn {
     }
 
     // Creates a new instance of MemoryTurn.
-    static public List<IMemoryTile> unpersist(byte[] byteArray) throws JSONException {
+    public void unpersist(byte[] byteArray) throws JSONException {
 
         if (byteArray == null) {
             Log.d(TAG, "Empty array---possible bug.");
-            return MemoryFactory.getInstance().createMemory().getTiles();
+            data.setTiles(MemoryFactory.getInstance().createMemory().getTiles());
+            return;
         }
 
         String st = null;
@@ -86,7 +102,7 @@ public class MemoryTurn {
             st = new String(byteArray, "UTF-8");
         } catch (UnsupportedEncodingException e1) {
             e1.printStackTrace();
-            return null;
+            return;
         }
 
         Log.d(TAG, "====UNPERSIST \n" + st);
@@ -94,12 +110,23 @@ public class MemoryTurn {
         List<IMemoryTile> list = new ArrayList<>();
 
         JSONArray array = new JSONArray(st);
-        for(int i = 0; i<array.length();i++ ) {
+        for(int i = 0; i<array.length()-1;i++ ) {
             JSONObject object = array.getJSONObject(i);
             list.add(toObject(object));
         }
+        JSONObject object = array.getJSONObject(array.length()-1);
+        try {
+            this.playerOneName = object.getString("playerOneName");
+            this.playerTwoName = object.getString("playerTwoName");
+            this.playerOneScore = object.getInt("playerOneScore");
+            this.playerTwoScore = object.getInt("playerTwoScore");
+            this.playerturn = object.getInt("playerTurn");
 
-        return list;
+        } catch (JSONException e) {
+            Log.e("MemoryPlayer", "There was an issue parsing JSON!", e);
+        }
+
+        data.setTiles(list);
     }
 
     public static IMemoryTile toObject(JSONObject object) {

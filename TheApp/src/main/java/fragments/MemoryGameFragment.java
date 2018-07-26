@@ -1,52 +1,33 @@
 package fragments;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.MainThread;
-import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.Fragment;
-import android.util.Log;
+import android.support.v4.app.FragmentTransaction;
+import android.transition.TransitionInflater;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.games.GamesCallbackStatusCodes;
-import com.google.android.gms.games.GamesClientStatusCodes;
-import com.google.android.gms.games.TurnBasedMultiplayerClient;
-import com.google.android.gms.games.multiplayer.turnbased.TurnBasedMatch;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-
-import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import gamecomponents.MemoryTurn;
-import gamecomponents.memory.IMemory;
 import gamecomponents.memory.IMemoryTile;
-import gamecomponents.memory.MemoryFactory;
 import mini.game.collection.R;
 
-public class MemoryGameFragment extends Fragment implements View.OnClickListener{
+public class MemoryGameFragment extends Fragment implements View.OnClickListener, MemoryMatchFragment.Listener{
 
-    private AlertDialog mAlertDialog;
-    // Should I be showing the turn API?
     public boolean isDoingTurn = false;
 
-    // This is the current match we're in; null if not loaded
-    public TurnBasedMatch mMatch;
-
     // tag for debug logging
-    private static final String TAG = "MGC";
+    private static final String TAG = "MGF";
 
     //Handler
     Handler handler;
@@ -70,6 +51,10 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     Button doneButton;
     TextView showTurnText;
     RelativeLayout relativeLayout;
+    TextView playerOneName;
+    TextView playerTwoName;
+    TextView playerOneScore;
+    TextView playerTwoScore;
 
     private int firstTry;
     private int secondTry;
@@ -78,6 +63,11 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     private boolean canClick;
     private int clickedNumber;
     private boolean updateTapDone;
+
+    @Override
+    public MemoryTurn getMemoryData() {
+        return getData();
+    }
 
     interface Listener {
         void memoryDoneClicked();
@@ -137,6 +127,10 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
         showTurnText = view.findViewById(R.id.load_game_text);
         relativeLayout = view.findViewById(R.id.memory_game_relative_layout);
         relativeLayout.setOnClickListener(this);
+        playerOneName = view.findViewById(R.id.playerOneName);
+        playerTwoName = view.findViewById(R.id.playerTwoName);
+        playerOneScore = view.findViewById(R.id.playerOneScore);
+        playerTwoScore = view.findViewById(R.id.playerTwoScore);
 
         firstTry = -1;
         secondTry = -1;
@@ -150,7 +144,10 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
         handler = new Handler(getActivity().getApplicationContext().getMainLooper());
         showTurnText.setVisibility(View.VISIBLE);
         showTurnText.setTextColor(Color.BLACK);
-
+        playerOneName.setText(getData().playerOneName);
+        playerTwoName.setText(getData().playerTwoName);
+        playerOneScore.setText(String.valueOf(getData().playerOneScore));
+        playerTwoScore.setText(String.valueOf(getData().playerTwoScore));
         return view;
 
     }
@@ -159,6 +156,7 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
         mListener = listener;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onClick(View view) {
         if(canClick) {
@@ -224,6 +222,7 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
                     updateTap();
                     showTurnText.setVisibility(View.GONE);
             }
+
         }
 
         switch (view.getId()) {
@@ -238,13 +237,14 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void onMemoryTileTappedEvent(int i) {
         if (firstTry == -1){
             performFirst(i);
         } else if (!done){
             performSecond(i);
         }
-        if(firstTry != -1 && correct == false && done == true) {
+        if(firstTry != -1 && !correct && done) {
             turnAroundWrongGuesses();
         }
             //TODO win statement
@@ -260,28 +260,43 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
         canClick = false;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private void performSecond(int i) {
-        System.out.println("Inne i perform second");
 
         if(!getData().data.getTiles().get(i).getChecked()) {
-            System.out.println("Inne i perform second2");
 
             getData().data.getTiles().get(i).toggleChecked();
             secondTry = i;
             changeToFlipped(i);
             if (getData().data.getTiles().get(firstTry).getType() == getData().data.getTiles().get(i).getType()) {
                 correct = true;
+
+                setTransitionNameFunc(firstTry, i);
                 firstTry = -1;
                 increaseScore();
             } else {
                 correct = false;
                 done = true;
+                if (getData().playerturn == 1){
+                    getData().playerturn = 2;
+                } else {
+                    getData().playerturn=1;
+                }
+
             }
         }
     }
 
     private void increaseScore() {
-        //TODO increase score
+        if(getData().playerturn == 1){
+            System.out.println("Increase player one score");
+            getData().playerOneScore++;
+            playerOneScore.setText(String.valueOf(getData().playerOneScore));
+        } else {
+            System.out.println("Increase player two score");
+            getData().playerTwoScore++;
+            playerTwoScore.setText(String.valueOf(getData().playerTwoScore));
+        }
     }
 
     private void performFirst(int i) {
@@ -536,15 +551,6 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
     public String[] memoryTexts = {"Police", "Horse", "Cow", "Ambulance", "Tractor", "Airplane","Helicopter","Bike"};
 
 
-
-
-
-
-
-
-
-
-
     @Override
     public void onPause(){
         super.onPause();
@@ -552,199 +558,164 @@ public class MemoryGameFragment extends Fragment implements View.OnClickListener
         // onResume->signInSilently->onConnected.
     }
 
-    // This is a helper functio that will do all the setup to create a simple failure message.
-    // Add it to any task and in the case of an failure, it will report the string in an alert
-    // dialog.
-
-    // Switch to gameplay view.
-    public void setGameplayUI() {
-        Log.d(TAG, "in setGameplayUI");
-        isDoingTurn = true;
-        //mDataView.setText(mTurnData.data);
-        //mTurnTextView.setText(getString(R.string.turn_label, mTurnData.turnCounter));
-    }
-
-    // Helpful dialogs
-
-    // Generic warning/info dialog
-    public void showWarning(String title, String message) {
-        Log.d(TAG, "in showWarning");
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this.getContext());
-
-        // set title
-        alertDialogBuilder.setTitle(title).setMessage(message);
-
-        // set dialog message
-        alertDialogBuilder.setCancelable(false).setPositiveButton("OK",
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) {
-                        // if this button is clicked, close
-                        // current activity
-                    }
-                });
-
-        // create alert dialog
-        mAlertDialog = alertDialogBuilder.create();
-
-        // show it
-        mAlertDialog.show();
-    }
-
-    /**
-     * Since a lot of the operations use tasks, we can use a common handler for whenever one fails.
-     *
-     * @param exception The exception to evaluate.  Will try to display a more descriptive reason for
-     *                  the exception.
-     * @param details   Will display alongside the exception if you wish to provide more details for
-     *                  why the exception happened
-     */
-    private void handleException(Exception exception, String details) {
-        Log.d(TAG, "in handleException");
-
-        int status = 0;
-
-        if (exception instanceof TurnBasedMultiplayerClient.MatchOutOfDateApiException) {
-            TurnBasedMultiplayerClient.MatchOutOfDateApiException matchOutOfDateApiException =
-                    (TurnBasedMultiplayerClient.MatchOutOfDateApiException) exception;
-
-            new AlertDialog.Builder(this.getContext())
-                    .setMessage("Match was out of date, updating with latest match data...")
-                    .setNeutralButton(android.R.string.ok, null)
-                    .show();
-
-            TurnBasedMatch match = matchOutOfDateApiException.getMatch();
-            try {
-                updateMatch(match);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            return;
-        }
-
-        if (exception instanceof ApiException) {
-            ApiException apiException = (ApiException) exception;
-            status = apiException.getStatusCode();
-        }
-
-        if (!checkStatusCode(status)) {
-            return;
-        }
-
-        String message = getString(R.string.status_exception_error, details, status, exception);
-
-        new AlertDialog.Builder(this.getContext())
-                .setMessage(message)
-                .setNeutralButton(android.R.string.ok, null)
-                .show();
-    }
-
-
-    // This is the main function that gets called when players choose a match
-    // from the inbox, or else create a match and want to start it.
-    public void updateMatch(TurnBasedMatch match) throws JSONException {
-        Log.d(TAG, "in updateMatch");
-        mMatch = match;
-
-        int status = match.getStatus();
-        int turnStatus = match.getTurnStatus();
-
-        switch (status) {
-            case TurnBasedMatch.MATCH_STATUS_CANCELED:
-                showWarning("Canceled!", "This game was canceled!");
-                return;
-            case TurnBasedMatch.MATCH_STATUS_EXPIRED:
-                showWarning("Expired!", "This game is expired.  So sad!");
-                return;
-            case TurnBasedMatch.MATCH_STATUS_AUTO_MATCHING:
-                showWarning("Waiting for auto-match...",
-                        "We're still waiting for an automatch partner.");
-                return;
-            case TurnBasedMatch.MATCH_STATUS_COMPLETE:
-                if (turnStatus == TurnBasedMatch.MATCH_TURN_STATUS_COMPLETE) {
-                    showWarning("Complete!",
-                            "This game is over; someone finished it, and so did you!  " +
-                                    "There is nothing to be done.");
-                    break;
-                }
-
-                // Note that in this state, you must still call "Finish" yourself,
-                // so we allow this to continue.
-                showWarning("Complete!",
-                        "This game is over; someone finished it!  You can only finish it now.");
-        }
-
-        // OK, it's active. Check on turn status.
-        switch (turnStatus) {
-            case TurnBasedMatch.MATCH_TURN_STATUS_MY_TURN:
-                /*mTurnData = new MemoryTurn();
-                mTurnData.data = MemoryFactory.getInstance().createMemory() ;
-                mTurnData.data.setTiles(MemoryTurn.unpersist(mMatch.getData()));
-                System.out.println("JAg ar har" + mTurnData.data.getTiles().get(0).getType());
-*/
-                System.out.println("OJOJOJOJ PROBLEM PREOBLEM");
-                setGameplayUI();
-                return;
-            case TurnBasedMatch.MATCH_TURN_STATUS_THEIR_TURN:
-                // Should return results.
-                showWarning("Alas...", "It's not your turn.");
-                break;
-            case TurnBasedMatch.MATCH_TURN_STATUS_INVITED:
-                showWarning("Good inititative!",
-                        "Still waiting for invitations.\n\nBe patient!");
-        }
-
-        //TODO mTurnData = null;
-
-        //setViewVisibility();
-    }
-
-
-    // Returns false if something went wrong, probably. This should handle
-    // more cases, and probably report more accurate results.
-    private boolean checkStatusCode(int statusCode) {
-        Log.d(TAG, "in checkStatusCode");
-
-        switch (statusCode) {
-            case GamesCallbackStatusCodes.OK:
-                return true;
-
-            case GamesClientStatusCodes.MULTIPLAYER_ERROR_NOT_TRUSTED_TESTER:
-                showErrorMessage(R.string.status_multiplayer_error_not_trusted_tester);
-                break;
-            case GamesClientStatusCodes.MATCH_ERROR_ALREADY_REMATCHED:
-                showErrorMessage(R.string.match_error_already_rematched);
-                break;
-            case GamesClientStatusCodes.NETWORK_ERROR_OPERATION_FAILED:
-                showErrorMessage(R.string.network_error_operation_failed);
-                break;
-            case GamesClientStatusCodes.INTERNAL_ERROR:
-                showErrorMessage(R.string.internal_error);
-                break;
-            case GamesClientStatusCodes.MATCH_ERROR_INACTIVE_MATCH:
-                showErrorMessage(R.string.match_error_inactive_match);
-                break;
-            case GamesClientStatusCodes.MATCH_ERROR_LOCALLY_MODIFIED:
-                showErrorMessage(R.string.match_error_locally_modified);
-                break;
-            default:
-                showErrorMessage(R.string.unexpected_status);
-                Log.d(TAG, "Did not have warning or string to deal with: "
-                        + statusCode);
-        }
-
-        return false;
-    }
-
-    public void showErrorMessage(int stringId) {
-        Log.d(TAG, "in showErrorMessage");
-
-        showWarning("Warning", getResources().getString(stringId));
-    }
 
     public void setDoingTurn(boolean bool){
         this.isDoingTurn = bool;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void setTransitionNameFunc(int i, int j){
+        // Set shared and scene transitions
+        setSharedElementReturnTransition(TransitionInflater.from(getActivity()).inflateTransition(android.R.transition.move).setDuration(5000));
+        setExitTransition(TransitionInflater.from(getActivity()).inflateTransition(android.R.transition.move).setDuration(5000));
+
+        MemoryMatchFragment secondFragment = new MemoryMatchFragment();
+        secondFragment.setListener(this);
+        // Set shared and scene transitions on 2nd fragment
+        secondFragment.setSharedElementEnterTransition(TransitionInflater.from(getActivity()).inflateTransition(android.R.transition.move).setDuration(5000));
+        secondFragment.setEnterTransition(TransitionInflater.from(getActivity()).inflateTransition(android.R.transition.move).setDuration(5000));
+        FragmentTransaction trans = getFragmentManager().beginTransaction();
+        switch (i) {
+            case 0:
+                b1.setTransitionName("tileOne");
+                trans.addSharedElement(b1, "tileOne");
+                break;
+            case 1:
+                b2.setTransitionName("tileOne");
+                trans.addSharedElement(b2, "tileOne");
+                break;
+            case 2:
+                b3.setTransitionName("tileOne");
+                trans.addSharedElement(b3, "tileOne");
+                break;
+            case 3:
+                b4.setTransitionName("tileOne");
+                trans.addSharedElement(b4, "tileOne");
+                break;
+            case 4:
+                b5.setTransitionName("tileOne");
+                trans.addSharedElement(b5, "tileOne");
+                break;
+            case 5:
+                b6.setTransitionName("tileOne");
+                trans.addSharedElement(b6, "tileOne");
+                break;
+            case 6:
+                b7.setTransitionName("tileOne");
+                trans.addSharedElement(b7, "tileOne");
+                break;
+            case 7:
+                b8.setTransitionName("tileOne");
+                trans.addSharedElement(b8, "tileOne");
+                break;
+            case 8:
+                b9.setTransitionName("tileOne");
+                trans.addSharedElement(b9, "tileOne");
+                break;
+            case 9:
+                b10.setTransitionName("tileOne");
+                trans.addSharedElement(b10, "tileOne");
+                break;
+            case 10:
+                b11.setTransitionName("tileOne");
+                trans.addSharedElement(b11, "tileOne");
+                break;
+            case 11:
+                b12.setTransitionName("tileOne");
+                trans.addSharedElement(b12, "tileOne");
+                break;
+            case 12:
+                b13.setTransitionName("tileOne");
+                trans.addSharedElement(b13, "tileOne");
+                break;
+            case 13:
+                b14.setTransitionName("tileOne");
+                trans.addSharedElement(b14, "tileOne");
+                break;
+            case 14:
+                b15.setTransitionName("tileOne");
+                trans.addSharedElement(b15, "tileOne");
+                break;
+            case 15:
+                b16.setTransitionName("tileOne");
+                trans.addSharedElement(b16, "tileOne");
+                break;
+            default:
+                break;
+
+        }
+        switch (j) {
+            case 0:
+                b1.setTransitionName("tileTwo");
+                trans.addSharedElement(b1, "tileTwo");
+                break;
+            case 1:
+                b2.setTransitionName("tileTwo");
+                trans.addSharedElement(b2, "tileTwo");
+                break;
+            case 2:
+                b3.setTransitionName("tileTwo");
+                trans.addSharedElement(b3, "tileTwo");
+                break;
+            case 3:
+                b4.setTransitionName("tileTwo");
+                trans.addSharedElement(b4, "tileTwo");
+                break;
+            case 4:
+                b5.setTransitionName("tileTwo");
+                trans.addSharedElement(b5, "tileTwo");
+                break;
+            case 5:
+                b6.setTransitionName("tileTwo");
+                trans.addSharedElement(b6, "tileTwo");
+                break;
+            case 6:
+                b7.setTransitionName("tileTwo");
+                trans.addSharedElement(b7, "tileTwo");
+                break;
+            case 7:
+                b8.setTransitionName("tileTwo");
+                trans.addSharedElement(b8, "tileTwo");
+                break;
+            case 8:
+                b9.setTransitionName("tileTwo");
+                trans.addSharedElement(b9, "tileTwo");
+                break;
+            case 9:
+                b10.setTransitionName("tileTwo");
+                trans.addSharedElement(b10, "tileTwo");
+                break;
+            case 10:
+                b11.setTransitionName("tileTwo");
+                trans.addSharedElement(b11, "tileTwo");
+                break;
+            case 11:
+                b12.setTransitionName("tileTwo");
+                trans.addSharedElement(b12, "tileTwo");
+                break;
+            case 12:
+                b13.setTransitionName("tileTwo");
+                trans.addSharedElement(b13, "tileTwo");
+                break;
+            case 13:
+                b14.setTransitionName("tileTwo");
+                trans.addSharedElement(b14, "tileTwo");
+                break;
+            case 14:
+                b15.setTransitionName("tileTwo");
+                trans.addSharedElement(b15, "tileTwo");
+                break;
+            case 15:
+                b16.setTransitionName("tileTwo");
+                trans.addSharedElement(b16, "tileTwo");
+                break;
+            default:
+                break;
+
+        }
+        secondFragment.second = j;
+        secondFragment.first = i;
+        trans.replace(R.id.fragment_container,secondFragment).commit();
     }
 
 }

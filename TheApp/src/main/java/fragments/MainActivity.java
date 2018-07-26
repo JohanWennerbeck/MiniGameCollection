@@ -71,6 +71,7 @@ import org.json.JSONException;
 
 import java.util.ArrayList;
 
+import gamecomponents.MemoryPlayers;
 import gamecomponents.MemoryTurn;
 import gamecomponents.memory.MemoryFactory;
 import mini.game.collection.R;
@@ -110,6 +111,8 @@ public class MainActivity extends AppCompatActivity implements
     private static final int RC_UNUSED = 5001;
     private static final int RC_SIGN_IN = 9001;
 
+    String displayName;
+
     //AlertDialog
     private AlertDialog mAlertDialog;
 
@@ -118,12 +121,6 @@ public class MainActivity extends AppCompatActivity implements
 
     //Maybe not needed
     private PlayersClient mPlayersClient;
-
-    private int fragmentUsedNow;
-
-    public static final int F_MainMenu = 0;
-    public static final int F_MemoryMenu = 1;
-    public static final int F_MemoryGame = 2;
 
     // Client used to interact with the TurnBasedMultiplayer system.
     private TurnBasedMultiplayerClient mTurnBasedMultiplayerClient = null;
@@ -168,6 +165,7 @@ public class MainActivity extends AppCompatActivity implements
         mMainMenuFragment.setListener(this);
         mMemoryFragment.setListener(this);
         mMemoryGameFragment.setListener(this);
+
         // Add initial Main Menu fragment.
         // IMPORTANT: if this Activity supported rotation, we'd have to be
         // more careful about adding the fragment, since the fragment would
@@ -177,8 +175,6 @@ public class MainActivity extends AppCompatActivity implements
         getSupportFragmentManager().beginTransaction().add(R.id.fragment_container  ,
                 mMainMenuFragment).commit();
         checkPlaceholderIds();
-
-        fragmentUsedNow = F_MainMenu;
 
         getSupportFragmentManager().addOnBackStackChangedListener(
                 new FragmentManager.OnBackStackChangedListener() {
@@ -308,12 +304,29 @@ public class MainActivity extends AppCompatActivity implements
         mAchievementsClient = Games.getAchievementsClient(this, googleSignInAccount);
         mLeaderboardsClient = Games.getLeaderboardsClient(this, googleSignInAccount);
         mEventsClient = Games.getEventsClient(this, googleSignInAccount);
+        mPlayersClient = Games.getPlayersClient(this, googleSignInAccount);
+
 
         // Show sign-out button on main menu
         mMainMenuFragment.setShowSignInButton(false);
 
         Log.d(TAG, "onConnected(): Connection successful");
 
+        // Set the greeting appropriately on main menu
+        mPlayersClient.getCurrentPlayer()
+                .addOnCompleteListener(new OnCompleteListener<Player>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Player> task) {
+                        if (task.isSuccessful()) {
+                            displayName = task.getResult().getDisplayName();
+                        } else {
+                            Exception e = task.getException();
+                            handleException(e, getString(R.string.players_exception));
+                            displayName = "???";
+                        }
+                        //TODO something
+                    }
+                });
 
         // if we have accomplishments to push, push them
         if (!mOutbox.isEmpty()) {
@@ -625,7 +638,6 @@ public class MainActivity extends AppCompatActivity implements
             switchToMemoryMenu();
         } else if (id == R.id.FourInARow) {
             switchToFragment(mMainMenuFragment);
-            fragmentUsedNow = F_MainMenu;
         } else if (id == R.id.CarBingo) {
 
         }
@@ -817,11 +829,12 @@ public class MainActivity extends AppCompatActivity implements
         mTurnData = new MemoryTurn();
         // Some basic turn data
         mTurnData.data = MemoryFactory.getInstance().createMemory();
-
         mMatch = match;
-
+        if(mTurnData.playerOneName.equals("testtester")) {
+            mTurnData.playerOneName = displayName;
+        }
+        mTurnData.playerturn = 1;
         String myParticipantId = mMatch.getParticipantId(mPlayerId);
-
 
         mTurnBasedMultiplayerClient.takeTurn(match.getMatchId(),
                 mTurnData.persist(), myParticipantId)
@@ -832,7 +845,6 @@ public class MainActivity extends AppCompatActivity implements
                     }
                 })
                 .addOnFailureListener(createFailureListener("There was a problem taking a turn!"));
-
     }
 
     // This is the main function that gets called when players choose a match
@@ -875,7 +887,10 @@ public class MainActivity extends AppCompatActivity implements
                 try {
                     mTurnData = new MemoryTurn();
                     mTurnData.data = MemoryFactory.getInstance().createMemory();
-                    mTurnData.data.setTiles(MemoryTurn.unpersist(mMatch.getData()));
+                    mTurnData.unpersist(mMatch.getData());
+                    if(mTurnData.playerTwoName.equals("testtester") && !mTurnData.playerOneName.equals(displayName)){
+                        mTurnData.playerTwoName = displayName;
+                    }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -898,8 +913,6 @@ public class MainActivity extends AppCompatActivity implements
     // Switch to gameplay view.
     public void setGameplayUI() {
         switchToFragment(mMemoryGameFragment);
-        fragmentUsedNow = F_MemoryGame;
-
     }
 
     private InvitationCallback mInvitationCallback = new InvitationCallback() {
@@ -1012,7 +1025,6 @@ public class MainActivity extends AppCompatActivity implements
                     }
                 })
                 .addOnFailureListener(createFailureListener("There was a problem taking a turn!"));
-
         mTurnData = null;
         switchToMemoryMenu();
     }
@@ -1020,6 +1032,7 @@ public class MainActivity extends AppCompatActivity implements
     public MemoryTurn getMemoryData(){
         return this.mTurnData;
     }
+
     private void onLeaveMatch() {
         Log.d(TAG, "in onLeaveMatch");
 
@@ -1060,7 +1073,6 @@ public class MainActivity extends AppCompatActivity implements
 
     public void switchToMemoryMenu(){
         switchToFragment(mMemoryFragment);
-        fragmentUsedNow = F_MemoryMenu;
     }
 
     //Everything else
